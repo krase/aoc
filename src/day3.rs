@@ -1,5 +1,5 @@
 
-use std::{fs::File, io::{BufRead, BufReader, Read}};
+use std::{fs::File, io::{BufReader, Read}};
 
 fn read_input(file:  &str) -> String {
     let file = File::open(file).expect("file not found!");
@@ -43,10 +43,11 @@ fn scan(content: &str) -> usize {
             States::FindMul => {
                 if content[pos..].starts_with("mul") {
                     state.state = States::FindOpen;
+                    pos += 2;
                 } else {
                     reset(&mut state);
                 }
-                pos += 3;
+                pos += 1;
             }
             States::FindOpen => {
                 if content[pos..].starts_with("(") {
@@ -68,7 +69,7 @@ fn scan(content: &str) -> usize {
             }
             States::FindComma => {
                 let tmp = &content[pos..];
-                if tmp.as_bytes()[0] == ',' {
+                if tmp.as_bytes()[0] == ',' as u8 {
                     state.state = States::FindDigits2;
                 } else {
                     reset(&mut state);
@@ -86,7 +87,7 @@ fn scan(content: &str) -> usize {
                         break;
                     }
                 }
-                if amount > 0 {
+                if amount > 0 && amount < 4 {
                     let tmp = &content[pos..pos+end];
                     let number: usize = tmp.parse().unwrap();
                     state.num1 = number;
@@ -107,7 +108,7 @@ fn scan(content: &str) -> usize {
                         break;
                     }
                 }
-                if amount > 0 {
+                if amount > 0 && amount < 4 {
                     let tmp = &content[pos..pos+end];
                     let number: usize = tmp.parse().unwrap();
                     state.num2 = number;
@@ -125,7 +126,7 @@ fn scan(content: &str) -> usize {
 
 fn main() {
     println!("Hello, world!");
-    //let data = read_input("src/example2.txt");
+    //let data = read_input("src/example3.txt");
     let data = read_input("src/day3.txt");
     
     println!("mul sum: {}", scan(&data));
