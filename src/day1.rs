@@ -31,9 +31,26 @@ fn sum_diffs(l1: &Vec<usize>, l2: &Vec<usize>) -> usize {
     sum
 }
 
+fn similarity( l1: &Vec<usize>, l2: &Vec<usize>) -> usize {
+     let mut l1 = l1.clone();
+     let mut l2 = l2.clone();
+     l1.sort();
+     l2.sort();
+     let mut sum = 0;
+     for i in 0..l1.len() {
+        if l2.contains(&l1[i]) {
+            sum += l1[i] * l2.iter().filter(|&n| *n == l1[i]).count();
+        }
+     }
+     sum
+}
 
 fn main() {
     println!("Hello, world!");
+    //let (l1, l2) = read_input("src/example.txt");
     let (l1, l2) = read_input("src/day1.txt");
     println!("sum_diffs: {}", sum_diffs(&l1, &l2));
+
+     let sim = similarity(&l1, &l2);
+     println!("similarity: {}", sim);
 }
