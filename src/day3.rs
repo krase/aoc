@@ -36,11 +36,22 @@ fn scan(content: &str) -> usize {
         num2: 0,
         state: States::FindMul,
     };
+    let mut enabled = true;
     let mut pos = 0;
     let mut accu = 0usize;
     while pos < content.len() {
         match state.state {
             States::FindMul => {
+                let tmp = &content[pos..];
+                if tmp.starts_with("do()") {
+                    enabled = true;
+                    pos += 4;
+                }
+                if tmp.starts_with("don't()") {
+                    enabled = false;
+                    pos += 7;
+                }
+
                 if content[pos..].starts_with("mul") {
                     state.state = States::FindOpen;
                     pos += 2;
@@ -60,7 +71,9 @@ fn scan(content: &str) -> usize {
             States::FindClose => {
                 if content[pos..].starts_with(")") {
                     state.state = States::FindMul;
-                    accu += state.num1 * state.num2;
+                    if enabled {
+                        accu += state.num1 * state.num2;
+                    }
                     println!("{} * {}", state.num1, state.num2);
                 } else {
                     reset(&mut state);
