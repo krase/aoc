@@ -23,54 +23,40 @@ fn test_xmas(data: &Matrix, row: usize, col: usize) -> usize {
     let height = data.len();
     let width = data[0].len();
     let mut count = 0usize;
-    if col + 3 < width {
-        let tmp = &data[row][col..col+4];
-        test_vec(&mut count, tmp);
+
+    if row + 2 < height && col + 2 < width {
+        let mut tmp1 = vec![];
+        tmp1.push(data[row][col]);
+        tmp1.push(data[row+1][col+1]);
+        tmp1.push(data[row+2][col+2]);
         
-    }
-    //up down
-    if row + 3 < height {
-        let tmp = &data[row..row+4];
-        let mut xx = vec![];
-        for r in tmp {
-            xx.push(r[col]);
-        }
-        test_vec(&mut count, &xx);
-        if col + 3 < width {
-            let mut tmp = vec![];
-            tmp.push(data[row][col]);
-            tmp.push(data[row+1][col+1]);
-            tmp.push(data[row+2][col+2]);
-            tmp.push(data[row+3][col+3]);
-            test_vec(&mut count, &tmp);
-        }
-        if col >= 3 {
-            let mut tmp = vec![];
-            tmp.push(data[row][col]);
-            tmp.push(data[row+1][col-1]);
-            tmp.push(data[row+2][col-2]);
-            tmp.push(data[row+3][col-3]);
-            test_vec(&mut count, &tmp);
+        let row = row+ 2;
+        let mut tmp2 = vec![];
+        tmp2.push(data[row][col]);
+        tmp2.push(data[row-1][col+1]);
+        tmp2.push(data[row-2][col+2]);
+        if test_vec(&mut count, &tmp1) &&
+        test_vec(&mut count, &tmp2) {
+            count += 1;
         }
     }
 
     count
 }
 
-fn test_vec(count: &mut usize, xx: &[u8]) {
-    if b"XMAS".eq(xx) {
-        *count += 1;
+fn test_vec(count: &mut usize, xx: &[u8]) -> bool {
+    if b"MAS".eq(xx) || b"SAM".eq(xx) {
+        return true;
     }
-    if b"SAMX".eq(xx) {
-        *count += 1;
-    }
+    
+    false
 }
 
 fn test_all(data: &Matrix) -> usize{
     let mut counter: usize = 0;
     for row in 0..data.len() {
         for col in 0..data[0].len() {
-            if data[row][col] == b'X' || data[row][col] == b'S'{
+            if data[row][col] == b'M' || data[row][col] == b'S'{
                 counter += test_xmas(data, row, col);
             }
         }
