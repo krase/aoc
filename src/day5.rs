@@ -1,14 +1,9 @@
-use petgraph::algo::{floyd_warshall, kosaraju_scc, toposort, DfsSpace};
-use petgraph::data::{Build, DataMap};
 use petgraph::graph::{DiGraph, NodeIndex};
-use petgraph::visit::NodeIndexable;
-use petgraph::visit::{EdgeRef, IntoNodeReferences};
-use petgraph::{Directed, Graph, Incoming};
+use petgraph::Graph;
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::ops::Index;
 
 #[derive(Debug)]
 struct Protocol {
@@ -62,8 +57,8 @@ fn read_input(file: &str) -> Protocol {
 
     //let mut val2index: HashMap<usize, NodeIndex> = HashMap::new();
     for node in nodes {
-        let nodeIdx = ret.orderings.add_node(node);
-        ret.val2index.insert(node, nodeIdx);
+        let node_idx = ret.orderings.add_node(node);
+        ret.val2index.insert(node, node_idx);
     }
 
     for edge in edges {
@@ -74,67 +69,6 @@ fn read_input(file: &str) -> Protocol {
         );
     }
 
-    ret
-}
-
-fn toposort_updates(proto: &Protocol, update: Vec<usize>) -> Vec<usize> {
-    let selection: HashSet<NodeIndex> = update
-        .iter()
-        .map(|x| *proto.val2index.get(x).unwrap())
-        .collect();
-    let graph = &proto.orderings;
-
-    // 3. Finde starke Zusammenhangskomponenten innerhalb der Auswahl
-    let sccs = kosaraju_scc(&graph);
-    let selected_sccs: Vec<_> = sccs
-        .into_iter()
-        .filter(|scc| scc.iter().any(|node| selection.contains(node)))
-        .collect();
-
-    println!("Strongly Connected Components in selection:");
-    for (i, scc) in selected_sccs.iter().enumerate() {
-        let nodes: Vec<_> = scc.iter().map(|&n| graph[n]).collect();
-        println!("Component {}: {:?}", i, nodes);
-    }
-
-    // 4. Erstelle einen Teilgraphen für die Auswahl und deren Abhängigkeiten
-    let mut subgraph_nodes = HashSet::new();
-    for &node in &selection {
-        subgraph_nodes.insert(node);
-        for edge in graph.edges_directed(node, petgraph::Outgoing) {
-            subgraph_nodes.insert(edge.target());
-        }
-    }
-
-    let subgraph: Vec<_> = subgraph_nodes.iter().cloned().collect();
-    println!(
-        "Subgraph includes nodes: {:?}",
-        subgraph.iter().map(|&n| graph[n]).collect::<Vec<_>>()
-    );
-
-    // 5. Versuche eine topologische Sortierung auf dem Teilgraphen
-    let subgraph_map: HashMap<_, _> = subgraph.iter().enumerate().map(|(i, &n)| (n, i)).collect();
-    let mut subgraph_edges = Vec::new();
-    for edge in graph.edge_references() {
-        if subgraph_map.contains_key(&edge.source()) && subgraph_map.contains_key(&edge.target()) {
-            subgraph_edges.push((edge.source(), edge.target()));
-        }
-    }
-
-    let mut ret: Vec<usize> = Vec::new();
-    if let Ok(order) = toposort(&graph, None) {
-        let sorted: Vec<_> = order
-            .into_iter()
-            .filter(|node| subgraph_nodes.contains(node))
-            .collect();
-        println!("Topological order within subgraph:");
-        for node in sorted {
-            ret.push(graph[node]);
-            println!("{}", graph[node]);
-        }
-    } else {
-        println!("The subgraph contains cycles; no topological order is possible.");
-    }
     ret
 }
 
