@@ -31,3 +31,4 @@ path = "src/day6.rs"
 [dependencies]
 
 petgraph = "0.6.5"
+futures = { version = "0.3.31", features = ["thread-pool"] }

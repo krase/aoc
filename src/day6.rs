@@ -1,8 +1,8 @@
-use std::cmp::PartialEq;
+use std::cmp::{PartialEq, PartialOrd};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 enum Direction {
     Up = 0,
     Right,
@@ -10,13 +10,15 @@ enum Direction {
     Left,
 }
 
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, PartialOrd)]
 enum Field {
     #[default]
     Empty,
-    Visited,
     Obstacle,
     Guard(Direction),
+    Visited,
+    Visited2,
+    Visited3,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -25,7 +27,7 @@ struct Pos {
     y: isize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Map {
     pos: Pos, // Guard position
     direction: Direction,
@@ -60,7 +62,7 @@ impl Map {
             y: (index / self.width) as isize,
         }
     }
-    
+
     fn set_pos(&mut self, pos: Pos) {
         self.pos.x = pos.x;
         self.pos.y = pos.y;
@@ -75,7 +77,12 @@ impl Map {
         let index = self.xy2index(&self.pos);
         &mut self.fields[index]
     }
-    
+
+    fn field_mut_at(&mut self, x: usize, y: usize) -> &mut Field {
+        let index = self.xy2index(&Pos {x: x as isize, y: y as isize});
+        &mut self.fields[index]
+    }
+
     fn turn_right(&mut self) {
         self.direction = match self.direction {
             Direction::Up => Direction::Right,
@@ -137,6 +144,7 @@ fn read_input(file: &str) -> Map {
         for c in line.chars() {
             match c {
                 '#' => map.fields[i] = Field::Obstacle,
+                'O' => map.fields[i] = Field::Obstacle,
                 '.' => map.fields[i] = Field::Empty,
                 '<' => map.fields[i] = Field::Guard(Direction::Left),
                 '>' => map.fields[i] = Field::Guard(Direction::Right),
@@ -155,7 +163,7 @@ fn read_input(file: &str) -> Map {
     map
 }
 
-fn simulate(map: &mut Map) -> usize {
+fn simulate(map: &mut Map) -> bool {
     map.visited += 1;
     *map.field_mut() = Field::Visited;
     loop {
@@ -167,25 +175,45 @@ fn simulate(map: &mut Map) -> usize {
                     map.turn_right();
                 }
                 _ => {
-                    if next_field != Field::Visited {
-                        map.visited += 1;
-                    }
                     map.set_pos(next_pos);
-                    *map.field_mut() = Field::Visited;
+                    if next_field < Field::Visited {
+                        *map.field_mut() = Field::Visited;
+                    } else if next_field < Field::Visited2 {
+                        *map.field_mut() = Field::Visited2;
+                    } else if next_field < Field::Visited3 {
+                        *map.field_mut() = Field::Visited3;
+                    } else if next_field == Field::Visited3 {
+                        return true;
+                    }
                 }
             }
         } else {
             break;
         }
     }
-    map.visited
+    false
 }
 
 fn main() {
     println!("Hello, world!");
+    //let n_workers = 8;
+    //let pool = ThreadPool::builder().pool_size(n_workers).create().expect("invalid pool");
     //let mut map = read_input("src/example6.txt");
-    let mut map = read_input("src/day6.txt");
+    let map_base = read_input("src/day6.txt");
     //println!("Data: {:?}", &data);
-    let val = simulate(&mut map);
-    println!("Value: {:?}", val);
+    let mut count = 0usize;
+    for x in 0 .. map_base.width {
+        for y in 0 .. map_base.height {
+            let mut map = map_base.clone();
+            if *map.field_at(&Pos{x:x as isize, y:y as isize}) != Field::Empty {
+                continue;
+            }
+            *map.field_mut_at(x, y) = Field::Obstacle;
+            let found_loop = simulate(&mut map);
+            if found_loop {
+                count += 1;
+            }
+        }
+    }
+    println!("Value: {:?}", count);
 }
